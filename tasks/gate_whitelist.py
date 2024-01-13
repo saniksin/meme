@@ -96,7 +96,7 @@ class GateAddWhitelist:
             current_otp = str(totp.now())
 
             result = await self.gate_wl_request(auth_code=current_otp)
-            if result == {'result': False, 'msg': 'Слишком много попыток'}:
+            if result == {'result': False} and result['msg'] in ['Слишком много попыток', 'Too many attempts']:
                 sleep_time = 400
                 logger.info(f'{self.get_addr()}{result["msg"]}')
                 for _ in tqdm(range(sleep_time), desc="СОН: "):
@@ -184,7 +184,7 @@ class GateAddWhitelist:
 
             result = await self.gate_wl_for_one_request(auth_code=current_otp)
 
-            if result == {'result': False, 'msg': 'Слишком много попыток'}:
+            if result == {'result': False} and result['msg'] in ['Слишком много попыток', 'Too many attempts']:
                 sleep_time = 400
                 logger.info(f'{self.data.address} | слишком много попыток')
                 for _ in tqdm(range(sleep_time), desc="СОН: "):
