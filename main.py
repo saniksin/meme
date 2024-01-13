@@ -162,7 +162,7 @@ async def main():
             task_counter = 0
             for account_data in accounts:
                 task_counter += 1
-                logger.info(f'Вывод на {task_counter} из {len(accounts)} кошельков.')
+                logger.info(f'Вывод на {task_counter} из {len(accounts)} кошельков. Текущая комиссия {FEE[0]}')
                 await start_withdraw(account_data)
                 for _ in tqdm(range(DELAY_BETWEEN_WITHDRAW), desc="СОН: "):
                     time.sleep(1)
