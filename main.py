@@ -2,6 +2,8 @@ import sys
 import itertools
 
 import asyncio
+import time
+from tqdm import tqdm
 
 from data.config import logger, TWITTER_TOKENS, PROXYS, PRIVATE_KEYS, completed_tasks, tasks_lock
 from utils.adjust_policy import set_windows_event_loop_policy
@@ -10,6 +12,7 @@ from utils.validate_tokens import validate_token
 from utils.user_menu import get_action
 from settings.settings import ASYNC_SEMAPHORE
 from tasks.main import start_task
+from tasks.gate_whitelist import GateAddWhitelist
 from db_api.start_import import ImportToDB
 from db_api.models import Wallet
 from db_api.database import get_accounts, initialize_db
@@ -96,14 +99,27 @@ async def main():
         else:
             logger.error(f'Вы не добавили приватники в базу данных!')
 
+    elif user_choice == '   4) Добавить кошельки в белый список GATE':
+
+        accounts: list[Wallet] = await get_accounts(gate_whitelist=True)
+        for num, account in enumerate(accounts, start=1):
+            logger.info(f'{num}/{len(accounts)} адресов')
+            await GateAddWhitelist(account_data=account).start_add_whitelisted_task()
+            sleep_time = 31
+            if num == len(accounts):
+                continue
+            logger.info(f'{account.address} | я буду спать {sleep_time}')
+            for _ in tqdm(range(sleep_time), desc="СОН: "):
+                time.sleep(1)
+
     else:
         logger.error('Выбрано неверное действие!')
 
 
 if __name__ == '__main__':
-    try:
-        create_files()
-        set_windows_event_loop_policy()
-        asyncio.run(main())
-    except (KeyboardInterrupt, TypeError):
-        logger.info('\n\nПрограмма успешно завершена')
+    #try:
+    create_files()
+    set_windows_event_loop_policy()
+    asyncio.run(main())
+    # except (KeyboardInterrupt, TypeError):
+    #     logger.info('\n\nПрограмма успешно завершена')

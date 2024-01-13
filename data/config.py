@@ -31,10 +31,10 @@ WALLETS_DB = os.path.join(STATUS_DIR, 'accounts.db')
 PROBLEMS = os.path.join(STATUS_DIR, 'problems.txt')
 PROBLEM_PROXY = os.path.join(STATUS_DIR, 'proxy_problem.txt')
 LOW_BALANCE = os.path.join(STATUS_DIR, 'low_balance.txt')
-
+WL_PROBLEM = os.path.join(STATUS_DIR, 'problem_with_add_to_wl.txt')
 
 # Создаем файлы которых не хватает
-IMPORTANT_FILES = [TWITTER_TOKENS, PROXYS, PRIVATE_KEYS, LOG, PROBLEMS, PROBLEM_PROXY, LOW_BALANCE]
+IMPORTANT_FILES = [TWITTER_TOKENS, PROXYS, PRIVATE_KEYS, LOG, PROBLEMS, PROBLEM_PROXY, LOW_BALANCE, WL_PROBLEM]
 
 
 # Кол-во выполненных асинхронных задач, блокировщий задач asyncio
