@@ -21,7 +21,7 @@ async def get_accounts(
     if ignore_problem_twitter:
         query = select(Wallet).where(Wallet.twitter_account_status == "OK", Wallet.token != None)
     elif gate_whitelist:
-        query = select(Wallet).where(Wallet.add_to_gate_whitelist == False)
+        query = select(Wallet).where(Wallet.add_to_gate_whitelist == 0)
     elif withdraw:
         query = select(Wallet).where(Wallet.add_to_gate_whitelist == True, Wallet.withdraw_from_gate == False)
     else:

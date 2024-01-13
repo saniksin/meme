@@ -182,7 +182,7 @@ class GateAddWhitelist:
             totp = pyotp.TOTP(GATE_OTP)
             current_otp = str(totp.now())
 
-            result = await self.gate_wl_request(auth_code=current_otp)
+            result = await self.gate_wl_for_one_request(auth_code=current_otp)
 
             if result == {'result': False, 'msg': 'Слишком много попыток'}:
                 sleep_time = 400
