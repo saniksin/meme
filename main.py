@@ -102,14 +102,14 @@ async def main():
             logger.error(f'Вы не добавили приватники в базу данных!')
 
     elif user_choice == '   4) Добавить кошельки в белый список GATE':
-
+        
         accounts: list[Wallet] = await get_accounts(gate_whitelist=True)
         if len(accounts) != 0:
             total_accounts = len(accounts)
             batch_size = 10
             batch_count = int(total_accounts / batch_size) + 1
             total_num = 0
-
+        
             logger.info('Начинаю добавлять аккаунты пачками по 10 штук')
             for start_idx in range(0, total_accounts, batch_size):
                 end_idx = min(start_idx + batch_size, total_accounts)
@@ -184,9 +184,9 @@ async def main():
 
 
 if __name__ == '__main__':
-    try:
-        create_files()
-        set_windows_event_loop_policy()
-        asyncio.run(main())
-    except (KeyboardInterrupt, TypeError):
-        logger.info('\n\nПрограмма успешно завершена')
+    #try:
+    create_files()
+    set_windows_event_loop_policy()
+    asyncio.run(main())
+    # except (KeyboardInterrupt, TypeError):
+    #     logger.info('\n\nПрограмма успешно завершена')
