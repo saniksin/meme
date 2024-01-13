@@ -117,15 +117,25 @@ async def main():
                 total_num += 1
                 logger.info(f'{total_num}/{batch_count} батчей по 10 кошельков')
 
-                await GateAddWhitelist(
-                    account_data=current_batch,
-                    batch_num=total_num
-                ).start_add_whitelisted_task()
-
-                sleep_time = 31
-                logger.info(f'я буду спать {sleep_time}')
-                for _ in tqdm(range(sleep_time), desc="СОН: "):
-                    time.sleep(1)
+                if len(current_batch) == 10:
+                    await GateAddWhitelist(
+                        account_data=current_batch,
+                        batch_num=total_num
+                    ).start_add_whitelisted_task()
+                    sleep_time = 31
+                    logger.info(f'я буду спать {sleep_time}')
+                    for _ in tqdm(range(sleep_time), desc="СОН: "):
+                        time.sleep(1)
+                else:
+                    for tasks in current_batch:
+                        await GateAddWhitelist(
+                            account_data=tasks,
+                            batch_num=total_num
+                        ).start_add_whitelisted_one_by_one_task()
+                        sleep_time = 31
+                        logger.info(f'я буду спать {sleep_time}. Последние акки добавляем по одному!')
+                        for _ in tqdm(range(sleep_time), desc="СОН: "):
+                            time.sleep(1)
         else:
             logger.error(f'Вы не добавили приватники в базу данных!')
 
