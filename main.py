@@ -105,7 +105,6 @@ async def main():
         total_accounts = len(accounts)
         batch_size = 10
         batch_count = int(total_accounts / batch_size) + 1
-        print(batch_count)
         total_num = 0
 
         logger.info('Начинаю добавлять аккаунты пачками по 10 штук')
