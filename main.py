@@ -102,13 +102,26 @@ async def main():
     elif user_choice == '   4) Добавить кошельки в белый список GATE':
 
         accounts: list[Wallet] = await get_accounts(gate_whitelist=True)
-        for num, account in enumerate(accounts, start=1):
-            logger.info(f'{num}/{len(accounts)} адресов')
-            await GateAddWhitelist(account_data=account).start_add_whitelisted_task()
+        total_accounts = len(accounts)
+        batch_size = 10
+        batch_count = int(total_accounts / batch_size) + 1
+        print(batch_count)
+        total_num = 0
+
+        logger.info('Начинаю добавлять аккаунты пачками по 10 штук')
+        for start_idx in range(0, total_accounts, batch_size):
+            end_idx = min(start_idx + batch_size, total_accounts)
+            current_batch = accounts[start_idx:end_idx]
+            total_num += 1
+            logger.info(f'{total_num}/{batch_count} батчей по 10 кошельков')
+
+            await GateAddWhitelist(
+                account_data=current_batch,
+                batch_num=total_num
+            ).start_add_whitelisted_task()
+
             sleep_time = 31
-            if num == len(accounts):
-                continue
-            logger.info(f'{account.address} | я буду спать {sleep_time}')
+            logger.info(f'я буду спать {sleep_time}')
             for _ in tqdm(range(sleep_time), desc="СОН: "):
                 time.sleep(1)
 
@@ -117,9 +130,9 @@ async def main():
 
 
 if __name__ == '__main__':
-    try:
-        create_files()
-        set_windows_event_loop_policy()
-        asyncio.run(main())
-    except (KeyboardInterrupt, TypeError):
-        logger.info('\n\nПрограмма успешно завершена')
+    #try:
+    create_files()
+    set_windows_event_loop_policy()
+    asyncio.run(main())
+    # except (KeyboardInterrupt, TypeError):
+    #     logger.info('\n\nПрограмма успешно завершена')

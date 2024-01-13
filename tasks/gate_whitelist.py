@@ -13,13 +13,32 @@ from db_api.database import Wallet, db
 
 class GateAddWhitelist:
 
-    def __init__(self, account_data: Wallet):
-        self.data: Wallet = account_data
-        self.version = self.data.user_agent.split('Chrome/')[1].split('.')[0]
+    def __init__(self, account_data: list[Wallet], batch_num: int):
+        self.data: list[Wallet] = account_data
+        self.butch_num: int = batch_num
         self.async_session = BaseAsyncSession(verify=True)
 
+    def get_addr(self):
+        address = ''
+        for accounts in self.data:
+            address += accounts.address + ' | '
+
+        return address
+
+    def prepare_format_info(self):
+        address = ''
+        receiver_name = ''
+        for num, accounts in enumerate(self.data, start=1):
+            address += accounts.address
+            receiver_name += f'withdraw{accounts.id}'
+            if num == 10:
+                continue
+            address += "@"
+            receiver_name += "@"
+        return address, receiver_name
+
     async def gate_wl_request(self, auth_code: str):
-        url = 'https://www.gate.io/json_svr/query?u=116'
+        url = 'https://www.gate.io/json_svr/query'
 
         headers = {
             'authority': 'www.gate.io',
@@ -40,23 +59,22 @@ class GateAddWhitelist:
             'x-requested-with': 'XMLHttpRequest',
         }
 
+        address, receiver_name = self.prepare_format_info()
+        print(address)
+
+        print(receiver_name)
         data = {
+            'curr_type': 'MEME@MEME@MEME@MEME@MEME@MEME@MEME@MEME@MEME@MEME',
+            'chain': 'ETH@ETH@ETH@ETH@ETH@ETH@ETH@ETH@ETH@ETH',
+            'addr': address,
+            'receiver_name': receiver_name,
+            'address_tag': '@@@@@@@@@',
+            'batch_sub': '1',
             'type': 'set_withdraw_address',
-            'curr_type': 'MEME',
+            'totp': f'{auth_code}',
+            'fundpass': TRADE_PASSWORD,
             'verified': '1',
             'is_universal': '1',
-            'addr': self.data.address,
-            'receiver_name': '',
-            'address_tag': '',
-            'source': '',
-            'fundpass': TRADE_PASSWORD,
-            'chain': 'ETH',
-            'sub_user_id': '',
-            'totp': f'{auth_code}',
-            'smscode': '',
-            'emailcode': '',
-            'batch_sub': '1',
-            'id': '',
         }
 
         response = await self.async_session.post(
@@ -79,30 +97,34 @@ class GateAddWhitelist:
             current_otp = str(totp.now())
 
             result = await self.gate_wl_request(auth_code=current_otp)
-
+            print(result)
             if result == {'result': False, 'msg': 'Слишком много попыток'}:
                 sleep_time = 400
-                logger.info(f'{self.data.address} | слишком много попыток')
+                logger.info(f'{self.get_addr()}{result["msg"]}')
                 for _ in tqdm(range(sleep_time), desc="СОН: "):
                     time.sleep(1)
                 continue
             elif not result.get('result', False):
-                logger.info(f'{self.data.address} | {result["msg"]}')
+                logger.info(f'{self.get_addr()}{result["msg"]}')
                 continue
             else:
                 if result['result']:
-                    logger.success(f'{self.data.address} | {result["msg"]}')
-                    self.data.add_to_gate_whitelist = True
-                    await self.write_to_db()
-                    break
+                    logger.success(f'{self.get_addr()}{result["msg"]}')
+                    for accounts in self.data:
+                        accounts.add_to_gate_whitelist = True
+                        await self.write_to_db(accounts)
+                    return True
                 continue
 
         if attempts == NUMBER_OF_ATTEMPTS:
 
             with open('problem_with_add_to_wl.txt', mode='a') as file:
-                file.write(f'{self.data.address}\n')
+                for accounts in self.data:
+                    file.write(f'{accounts.address}\n')
 
-    async def write_to_db(self):
+        return False
+
+    async def write_to_db(self, accounts):
         async with AsyncSession(db.engine) as session:
-            await session.merge(self.data)
+            await session.merge(accounts)
             await session.commit()
