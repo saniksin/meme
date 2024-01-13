@@ -13,7 +13,7 @@ ASYNC_SEMAPHORE = 50
 MIN_BALANCE = 69000000000000000000
 
 # Ключ от капчи
-CAPMONSTER_API_KEY = os.getenv('API_KEY')
+CAPMONSTER_API_KEY = os.getenv('API_KEY_CAPTCHA')
 
 # GATE otp token, нужно для добавления в wl
 GATE_OTP = os.getenv('GATE_TOKEN')

@@ -28,14 +28,15 @@ class GateAddWhitelist:
     def prepare_format_info(self):
         address = ''
         receiver_name = ''
-        for num, accounts in enumerate(self.data, start=1):
-            address += accounts.address
-            receiver_name += f'withdraw{accounts.id}'
-            if num == 10:
-                continue
-            address += "@"
-            receiver_name += "@"
-        return address, receiver_name
+        if isinstance(self.data, list):
+            for num, accounts in enumerate(self.data, start=1):
+                address += accounts.address
+                receiver_name += f'withdraw{accounts.id}'
+                if num == 10:
+                    continue
+                address += "@"
+                receiver_name += "@"
+            return address, receiver_name
 
     async def gate_wl_request(self, auth_code: str):
         url = 'https://www.gate.io/json_svr/query'
@@ -189,11 +190,11 @@ class GateAddWhitelist:
                 for _ in tqdm(range(sleep_time), desc="СОН: "):
                     time.sleep(1)
                 continue
-            elif not result.get('result', False):
+            elif not result.get('result', False) and result['msg'] != "Address must be unique":
                 logger.info(f'{self.data.address} | {result["msg"]}')
                 continue
             else:
-                if result['result']:
+                if result['result'] or result['msg'] == "Address must be unique":
                     logger.success(f'{self.data.address} | {result["msg"]}')
                     self.data.add_to_gate_whitelist = True
                     await self.write_to_db()
