@@ -101,9 +101,9 @@ async def main():
 
 
 if __name__ == '__main__':
-    #try:
-    create_files()
-    set_windows_event_loop_policy()
-    asyncio.run(main())
-    # except (KeyboardInterrupt, TypeError):
-    #     logger.info('\n\nПрограмма успешно завершена')
+    try:
+        create_files()
+        set_windows_event_loop_policy()
+        asyncio.run(main())
+    except (KeyboardInterrupt, TypeError):
+        logger.info('\n\nПрограмма успешно завершена')
