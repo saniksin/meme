@@ -99,7 +99,7 @@ class GateWithdraw:
 
             amount_to_withdrawal = self.current_fee + random.uniform(69.00, 71.00)
             if self.current_fee < MAX_FEE and not self.disabled:
-                exchange.withdraw(
+                status = exchange.withdraw(
                     code=symbol,
                     amount=amount_to_withdrawal,
                     address=self.data.address,
@@ -107,10 +107,13 @@ class GateWithdraw:
                         "network": "ETH"
                     }
                 )
-                logger.success(f'{self.data.address} | успешно вывел {amount_to_withdrawal} {symbol} c [GATE.IO].')
+                if status['status'] == 'pending':
+                    msg = (f'{self.data.address} | запрос на вывод  {amount_to_withdrawal} {symbol} c '
+                           f'[GATE.IO] успешно отправлен.')
+                    logger.success(msg)
 
-                await self.write_to_db()
-                return
+                    await self.write_to_db()
+                    return
 
         except Exception as error:
             logger.error(f'{self.data.address} | не смог вывести {symbol} c [GATE.IO].')
