@@ -60,9 +60,7 @@ class GateAddWhitelist:
         }
 
         address, receiver_name = self.prepare_format_info()
-        print(address)
 
-        print(receiver_name)
         data = {
             'curr_type': 'MEME@MEME@MEME@MEME@MEME@MEME@MEME@MEME@MEME@MEME',
             'chain': 'ETH@ETH@ETH@ETH@ETH@ETH@ETH@ETH@ETH@ETH',
@@ -97,7 +95,6 @@ class GateAddWhitelist:
             current_otp = str(totp.now())
 
             result = await self.gate_wl_request(auth_code=current_otp)
-            print(result)
             if result == {'result': False, 'msg': 'Слишком много попыток'}:
                 sleep_time = 400
                 logger.info(f'{self.get_addr()}{result["msg"]}')
