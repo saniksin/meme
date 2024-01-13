@@ -1,0 +1,21 @@
+# accounts
+private_keys.txt
+proxys.txt
+twitter_tokens.txt
+
+# status
+log.txt
+accounts.db
+problems.txt
+proxy_problem.txt
+low_balance.txt
+
+# виртуальное окружение
+.env
+
+.idea
+.vscode
+
+__pycache__/
+*.pyc
+
