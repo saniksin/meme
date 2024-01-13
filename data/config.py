@@ -54,3 +54,6 @@ WEBSITE_URL: str = 'https://www.memecoin.org/farming'
 
 # Логер
 logger.add(LOG, format='{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}', level='DEBUG')
+
+# FEE - не трогать!
+FEE = [0, 0]

@@ -20,3 +20,9 @@ GATE_OTP = os.getenv('GATE_TOKEN')
 TRADE_PASSWORD = os.getenv('TRADE_PASSWORD')
 CSRFTOKEN = os.getenv('CSRFTOKEN')
 COOKIES = os.getenv('COOKIES')
+API_KEY = os.getenv('API_KEY')
+SECRET = os.getenv('SECRET')
+
+# MAX_MEME_FEE
+MAX_FEE = 200
+DELAY_BETWEEN_WITHDRAW = 150

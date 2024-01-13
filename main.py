@@ -1,21 +1,23 @@
 import sys
 import itertools
+from datetime import datetime
 
 import asyncio
 import time
 from tqdm import tqdm
 
-from data.config import logger, TWITTER_TOKENS, PROXYS, PRIVATE_KEYS, completed_tasks, tasks_lock
+from data.config import logger, TWITTER_TOKENS, PROXYS, PRIVATE_KEYS, completed_tasks, tasks_lock, FEE
 from utils.adjust_policy import set_windows_event_loop_policy
 from utils.create_files import create_files
 from utils.validate_tokens import validate_token
 from utils.user_menu import get_action
-from settings.settings import ASYNC_SEMAPHORE
-from tasks.main import start_task
+from settings.settings import ASYNC_SEMAPHORE, MAX_FEE, DELAY_BETWEEN_WITHDRAW
+from tasks.main import start_task, start_withdraw
 from tasks.gate_whitelist import GateAddWhitelist
 from db_api.start_import import ImportToDB
 from db_api.models import Wallet
 from db_api.database import get_accounts, initialize_db
+from tasks.gate_withdraw import GateWithdraw
 
 
 def get_accounts_info(path):
@@ -102,27 +104,70 @@ async def main():
     elif user_choice == '   4) Добавить кошельки в белый список GATE':
 
         accounts: list[Wallet] = await get_accounts(gate_whitelist=True)
-        total_accounts = len(accounts)
-        batch_size = 10
-        batch_count = int(total_accounts / batch_size) + 1
-        total_num = 0
+        if len(accounts) != 0:
+            total_accounts = len(accounts)
+            batch_size = 10
+            batch_count = int(total_accounts / batch_size) + 1
+            total_num = 0
 
-        logger.info('Начинаю добавлять аккаунты пачками по 10 штук')
-        for start_idx in range(0, total_accounts, batch_size):
-            end_idx = min(start_idx + batch_size, total_accounts)
-            current_batch = accounts[start_idx:end_idx]
-            total_num += 1
-            logger.info(f'{total_num}/{batch_count} батчей по 10 кошельков')
+            logger.info('Начинаю добавлять аккаунты пачками по 10 штук')
+            for start_idx in range(0, total_accounts, batch_size):
+                end_idx = min(start_idx + batch_size, total_accounts)
+                current_batch = accounts[start_idx:end_idx]
+                total_num += 1
+                logger.info(f'{total_num}/{batch_count} батчей по 10 кошельков')
 
-            await GateAddWhitelist(
-                account_data=current_batch,
-                batch_num=total_num
-            ).start_add_whitelisted_task()
+                await GateAddWhitelist(
+                    account_data=current_batch,
+                    batch_num=total_num
+                ).start_add_whitelisted_task()
 
-            sleep_time = 31
-            logger.info(f'я буду спать {sleep_time}')
-            for _ in tqdm(range(sleep_time), desc="СОН: "):
-                time.sleep(1)
+                sleep_time = 31
+                logger.info(f'я буду спать {sleep_time}')
+                for _ in tqdm(range(sleep_time), desc="СОН: "):
+                    time.sleep(1)
+        else:
+            logger.error(f'Вы не добавили приватники в базу данных!')
+
+    elif user_choice == '   5) Вывод с GATE':
+        accounts: list[Wallet] = await get_accounts(withdraw=True)
+        if len(accounts) != 0:
+
+            current_time = datetime.now().strftime("%H:%M")
+            if current_time[-2:] in ["59", "00", "01"]:
+
+                logger.info('Текущее время перед обновлением комиссии! Ухожу на сон до 180 секунд')
+                if current_time[-2:] == "59":
+                    sleep_time = 180
+                elif current_time[-2:] == "00":
+                    sleep_time = 120
+                else:
+                    sleep_time = 60
+
+                for _ in tqdm(range(sleep_time), desc="СОН: "):
+                    time.sleep(1)
+
+            gate = GateWithdraw(accounts[0])
+            fee, disabled = await gate.get_withdrawal_fee()
+            FEE = [fee, disabled]
+
+            while fee > MAX_FEE:
+                sleep_time = ((61 - int(current_time[-2:])) * 60)
+                logger.info(f'Текущая fee: {fee} | settings max fee {MAX_FEE}. Сон до следующего часа')
+                for _ in tqdm(range(sleep_time), desc="СОН: "):
+                    time.sleep(1)
+                fee, disabled = await gate.get_withdrawal_fee()
+                FEE = [fee, disabled]
+
+            task_counter = 0
+            for account_data in accounts:
+                task_counter += 1
+                logger.info(f'Вывод на {task_counter} из {len(accounts)} кошельков.')
+                await start_withdraw(account_data)
+                for _ in tqdm(range(DELAY_BETWEEN_WITHDRAW), desc="СОН: "):
+                    time.sleep(1)
+        else:
+            logger.error(f'Вы не добавили приватники в базу данных!')
 
     else:
         logger.error('Выбрано неверное действие!')
