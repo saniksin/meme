@@ -130,11 +130,11 @@ class GateWithdraw:
         if current_time[-2:] in ["59", "00", "01"]:
 
             if current_time[-2:] == "59":
-                sleep_time = 180
+                sleep_time = 210
             elif current_time[-2:] == "00":
-                sleep_time = 120
+                sleep_time = 150
             else:
-                sleep_time = 60
+                sleep_time = 90
 
             GateWithdraw.need_update = True
 

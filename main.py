@@ -148,11 +148,11 @@ async def main():
 
                 logger.info('Текущее время перед обновлением комиссии! Ухожу на сон до 180 секунд')
                 if current_time[-2:] == "59":
-                    sleep_time = 180
+                    sleep_time = 210
                 elif current_time[-2:] == "00":
-                    sleep_time = 120
+                    sleep_time = 150
                 else:
-                    sleep_time = 60
+                    sleep_time = 90
 
                 for _ in tqdm(range(sleep_time), desc="СОН: "):
                     time.sleep(1)
@@ -184,9 +184,9 @@ async def main():
 
 
 if __name__ == '__main__':
-    #try:
-    create_files()
-    set_windows_event_loop_policy()
-    asyncio.run(main())
-    # except (KeyboardInterrupt, TypeError):
-    #     logger.info('\n\nПрограмма успешно завершена')
+    try:
+        create_files()
+        set_windows_event_loop_policy()
+        asyncio.run(main())
+    except (KeyboardInterrupt, TypeError):
+        logger.info('\n\nПрограмма успешно завершена')
