@@ -107,6 +107,7 @@ class GateWithdraw:
                         "network": "ETH"
                     }
                 )
+                print(status)
                 if status['status'] == 'pending':
                     msg = (f'{self.data.address} | запрос на вывод  {amount_to_withdrawal} {symbol} c '
                            f'[GATE.IO] успешно отправлен.')
@@ -116,6 +117,10 @@ class GateWithdraw:
                     return
 
         except Exception as error:
+            if "Too many tries, please try again later" in str(error):
+                logger.error(f'{self.data.address} | много запросов сплю 10 минут [GATE.IO].')
+                await asyncio.sleep(600)
+                await self.start_withdraw()
             logger.error(f'{self.data.address} | не смог вывести {symbol} c [GATE.IO].')
 
     async def write_to_db(self):
