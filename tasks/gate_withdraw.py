@@ -120,6 +120,7 @@ class GateWithdraw:
             if "Too many tries, please try again later" in str(error):
                 logger.error(f'{self.data.address} | много запросов сплю 10 минут [GATE.IO].')
                 await asyncio.sleep(600)
+                self.current_fee, disabled = await self.get_withdrawal_fee()
                 await self.start_withdraw()
             logger.error(f'{self.data.address} | не смог вывести {symbol} c [GATE.IO].')
 

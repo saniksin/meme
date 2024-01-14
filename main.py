@@ -6,7 +6,8 @@ import asyncio
 import time
 from tqdm import tqdm
 
-from data.config import logger, TWITTER_TOKENS, PROXYS, PRIVATE_KEYS, completed_tasks, tasks_lock, FEE
+from data.config import logger, TWITTER_TOKENS, PROXYS, PRIVATE_KEYS, completed_tasks, tasks_lock, FEE, FINISHED, \
+    VERIFICATION
 from utils.adjust_policy import set_windows_event_loop_policy
 from utils.create_files import create_files
 from utils.validate_tokens import validate_token
@@ -176,6 +177,39 @@ async def main():
                 await start_withdraw(account_data)
                 for _ in tqdm(range(DELAY_BETWEEN_WITHDRAW), desc="СОН: "):
                     time.sleep(1)
+        else:
+            logger.error(f'Вы не добавили приватники в базу данных!')
+
+    elif user_choice == '   6) Проверить что все аккаунты прошли капчу и подтвердили задание':
+        accounts: list[Wallet] = await get_accounts(finish_check=True)
+        if len(accounts) != 0:
+            logger.info(f'Всего {len(accounts)} аккаунтов по базе данных закончили задания')
+            tasks = []
+            for account_data in accounts:
+                task = asyncio.create_task(start_limited_task(semaphore, accounts, account_data, option=6))
+                tasks.append(task)
+
+            await asyncio.wait(tasks)
+
+            msg = (f'\n\nВсего аккаунтов {len(accounts)}.\n'
+                   f'Аккаунтов успешно все закончили: {FINISHED[0]}\n'
+                   f'Аккаунтов не полностью закончили: {FINISHED[1]}\n'
+                   f'Аккаунтов вообще ничего не подтвердивших: {FINISHED[2]}\n'
+                   f'Аккаунтов которые не смогли собрать статистику: {FINISHED[3]}')
+            logger.info(msg)
+        else:
+            logger.error(f'Вы не добавили приватники в базу данных!')
+
+    elif user_choice == '   7) Собрать bearer токены':
+        accounts: list[Wallet] = await get_accounts(finish_check=True)
+        if len(accounts) != 0:
+            logger.info(f'Всего {len(accounts)} аккаунтов по базе данных закончили задания')
+            tasks = []
+            for account_data in accounts:
+                task = asyncio.create_task(start_limited_task(semaphore, accounts, account_data, option=7))
+                tasks.append(task)
+
+            await asyncio.wait(tasks)
         else:
             logger.error(f'Вы не добавили приватники в базу данных!')
 

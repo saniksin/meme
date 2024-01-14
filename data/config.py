@@ -32,9 +32,15 @@ PROBLEMS = os.path.join(STATUS_DIR, 'problems.txt')
 PROBLEM_PROXY = os.path.join(STATUS_DIR, 'proxy_problem.txt')
 LOW_BALANCE = os.path.join(STATUS_DIR, 'low_balance.txt')
 WL_PROBLEM = os.path.join(STATUS_DIR, 'problem_with_add_to_wl.txt')
+VERIFICATION = os.path.join(STATUS_DIR, 'verification_problem.txt')
+BEARER_TOKEN = os.path.join(STATUS_DIR, 'bearer_tokens.txt')
 
 # Создаем файлы которых не хватает
-IMPORTANT_FILES = [TWITTER_TOKENS, PROXYS, PRIVATE_KEYS, LOG, PROBLEMS, PROBLEM_PROXY, LOW_BALANCE, WL_PROBLEM]
+IMPORTANT_FILES = [
+    TWITTER_TOKENS, PROXYS, PRIVATE_KEYS, LOG, PROBLEMS,
+    PROBLEM_PROXY, LOW_BALANCE, WL_PROBLEM, VERIFICATION,
+    BEARER_TOKEN
+]
 
 
 # Кол-во выполненных асинхронных задач, блокировщий задач asyncio
@@ -57,3 +63,6 @@ logger.add(LOG, format='{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}', level
 
 # FEE - не трогать!
 FEE = [0, 0]
+
+# Acc finished - не трогать!
+FINISHED = [0, 0, 0, 0]

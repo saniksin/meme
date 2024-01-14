@@ -11,6 +11,8 @@ proxy_problem.txt
 low_balance.txt
 problem_with_add_to_wl.txt
 accounts.back
+verification_problem.txt
+bearer_tokens.txt
 
 # виртуальное окружение
 .env

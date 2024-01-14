@@ -18,6 +18,7 @@ async def get_accounts(
         gate_whitelist: bool = False,
         withdraw: bool = False,
         private_keys: bool = False,
+        finish_check: bool = False,
 ) -> List[Wallet]:
     if ignore_problem_twitter:
         query = select(Wallet).where(
@@ -36,10 +37,13 @@ async def get_accounts(
             Wallet.twitter_account_status != "OK",
             Wallet.completed == False
         )
+    elif finish_check:
+        query = select(Wallet).where(
+            Wallet.completed == True
+        )
     else:
         query = select(Wallet)
     return await db.all(query)
-
 
 
 async def initialize_db():

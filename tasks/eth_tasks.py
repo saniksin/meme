@@ -9,12 +9,13 @@ from curl_cffi.requests.errors import RequestsError
 
 from db_api.database import Wallet, db
 from eth.eth_clients import EthClient
-from data.config import MEME_CONTRACT, logger, PROBLEM_PROXY, LOW_BALANCE
+from data.config import MEME_CONTRACT, logger, PROBLEM_PROXY, LOW_BALANCE, FINISHED, VERIFICATION, BEARER_TOKEN
 from settings.settings import MIN_BALANCE, NUMBER_OF_ATTEMPTS
 from tasks.captha_tasks import CapthaSolver
 
 
 class EthTasks:
+    write_lock = asyncio.Lock()
 
     def __init__(self, account_data: Wallet):
         self.data = account_data
@@ -27,7 +28,7 @@ class EthTasks:
         self.version = self.data.user_agent.split('Chrome/')[1].split('.')[0]
         self.bearer_token = None
         self.old_points_balance = self.data.points
-        self.write_lock = asyncio.Lock()
+        #self.write_lock = asyncio.Lock()
 
     async def check_meme_balance(self):
         return await self.eth_client.wallet.balance(
@@ -108,15 +109,97 @@ class EthTasks:
                 logger.error(f'{self.data.address} | неизвестная ошибка: {error}')
                 print(traceback.print_exc())
 
+    async def start_check_stats(self):
+        for num, _ in enumerate(range(NUMBER_OF_ATTEMPTS), start=1):
+            try:
+                # логинимся
+                await self.start_login()
+                await self.check_verification_level()
+
+                break
+            except RequestsError:
+                logger.error(f'{self.data.address} | проблема с прокси! Проверьте прокси!')
+                await self.write_status(status="proxy problem", path=PROBLEM_PROXY)
+                continue
+
+            except Exception as error:
+                logger.error(f'{self.data.address} | неизвестная ошибка: {error}')
+                print(traceback.print_exc())
+                continue
+
+    async def start_write_bearer_tokens(self):
+        for num, _ in enumerate(range(NUMBER_OF_ATTEMPTS), start=1):
+            try:
+                logger.info(f'{self.data.address} | начинаю сбор bearer токенов. Попытка {num}')
+                await self.start_login()
+                if self.bearer_token:
+                    await self.write_status("None", BEARER_TOKEN)
+                    logger.success(f'{self.data.address} | закончил сбор bearer токенов')
+                    break
+                continue
+            except RequestsError:
+                logger.error(f'{self.data.address} | проблема с прокси! Проверьте прокси!')
+                await self.write_status(status="proxy problem", path=PROBLEM_PROXY)
+                continue
+
+            except Exception as error:
+                logger.error(f'{self.data.address} | неизвестная ошибка: {error}')
+                print(traceback.print_exc())
+                continue
+
+    async def check_verification_level(self):
+
+        headers = {
+            'authority': 'memefarm-api.memecoin.org',
+            'accept': 'application/json',
+            'accept-language': 'ru-RU,ru;q=0.9,uk;q=0.8',
+            'authorization': f'Bearer {self.bearer_token}',
+            'origin': 'https://www.memecoin.org',
+            'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': f'"{self.data.platform}"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-site',
+            'user-agent': self.data.user_agent,
+        }
+
+        response = await self.async_session.get(
+            'https://memefarm-api.memecoin.org/user/info',
+            headers=headers
+        )
+
+        if response.status_code == 200:
+            logger.info(f'{self.data.address} | успешно собрал статистку')
+            response_answer = response.json()
+            async with EthTasks.write_lock:
+                if response_answer["verification"] == 2:
+                    FINISHED[0] += 1
+                elif response_answer["verification"] == 1:
+                    FINISHED[1] += 1
+                    await self.write_status("Не полная верификация | 1", VERIFICATION)
+                elif response_answer["verification"] == 0:
+                    FINISHED[2] += 1
+                    await self.write_status("Не проходил капчу | 0", VERIFICATION)
+            return
+        FINISHED[3] += 1
+        await self.write_status("Не смог собрать статистику | NONE", VERIFICATION)
+        logger.warning(f'{self.data.address} | не смог собрать статистику')
+        return
+
     async def write_status(self, status, path):
         """ Записывает текщий статус проблемного токена в соответсвующий файл """
 
-        async with self.write_lock:
+        async with EthTasks.write_lock:
             async with aiofiles.open(file=path, mode='a', encoding='utf-8-sig') as f:
                 if status == "proxy problem":
                     await f.write(f'{self.data.proxy}\n')
                 elif status == "low balance":
                     await f.write(f'{self.eth_client.account.address}\n')
+                elif path == VERIFICATION:
+                    await f.write(f'{self.eth_client.account.address} | {status}\n')
+                elif path == BEARER_TOKEN:
+                    await f.write(f'Bearer {self.bearer_token}\n')
                 else:
                     await f.write(f'{self.data.token} | {self.data.proxy} | {self.data.private_key} | {status}\n')
 
