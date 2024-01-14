@@ -39,49 +39,51 @@ class GateWithdraw:
         self.disabled = FEE[1]
 
     async def get_withdrawal_fee(self):
-        try:
-            url = 'https://www.gate.io/json_svr/query?u=113'
-            data = {
-                'type': 'check_withdraw_chain_by_addr',
-                'curr_type': 'MEME',
-                'addr': self.data.address
-            }
+        while True:
+            try:
+                logger.info(f'{self.data.address} | пробую получить новую комиссию')
+                url = 'https://www.gate.io/json_svr/query?u=113'
+                data = {
+                    'type': 'check_withdraw_chain_by_addr',
+                    'curr_type': 'MEME',
+                    'addr': self.data.address
+                }
 
-            response = await self.async_session.post(
-                url,
-                headers=self.headers,
-                data=data
-            )
+                response = await self.async_session.post(
+                    url,
+                    headers=self.headers,
+                    data=data
+                )
 
-            if response.status_code == 200:
                 response_data = response.json()
-                withdraw_txfee = response_data['datas'][0]['withdraw_txfee']
-                is_disabled = response_data['datas'][0]['is_disabled']
+                if response.status_code == 200:
+                    withdraw_txfee = response_data['datas'][0]['withdraw_txfee']
+                    is_disabled = response_data['datas'][0]['is_disabled']
 
-                if withdraw_txfee > MAX_FEE:
-                    await self.wait_for_the_fee()
+                    if withdraw_txfee > MAX_FEE:
+                        logger.info(f'{self.data.address} | комиссия слишком большая, ухожу на сон 400 сек')
+                        await asyncio.sleep(400)
+                        continue
 
-                FEE[0] = withdraw_txfee
-                FEE[1] = is_disabled
+                    FEE[0] = withdraw_txfee
+                    FEE[1] = is_disabled
 
-                logger.info('Новая комиссия получена и успешно записана!')
+                    logger.info('Новая комиссия получена и успешно записана!')
 
-                return withdraw_txfee, is_disabled
-            else:
-                logger.error(f"Request failed with status code: {response.status_code}")
+                    return
 
-        except Exception as ex:
-            logger.error(f"{self.data.address} - {ex}")
+                elif 'Слишком много попыток' in response_data.values() or \
+                     'Too many attempts' in response_data.values():
+                    logger.info(f'{self.data.address} | ухожу на сон 400 сек. Слишком много попыток получить ком-су.')
+                    await asyncio.sleep(400)
+                    continue
+                else:
+                    logger.error(f"Request failed with status code: {response.status_code}")
+                    continue
 
-    async def wait_for_the_fee(self):
-        try:
-            logger.info(f'Комиссия в этом часу слишком большая, буду спать целый час!')
-            while self.current_fee > MAX_FEE and not self.disabled:
-                self.current_fee, is_disabled = self.get_withdrawal_fee()
-                await asyncio.sleep(3600)
-            return True
-        except Exception as ex:
-            logger.error(f"{self.data.address} - {ex}. Ошибка ожидания FEE")
+            except Exception as ex:
+                logger.error(f"{self.data.address} - {ex}")
+                continue
 
     async def start_withdraw(self):
 
@@ -95,7 +97,9 @@ class GateWithdraw:
             need_update = await self.check_current_time()
 
             if need_update:
-                self.current_fee, disabled = await self.get_withdrawal_fee()
+                await self.get_withdrawal_fee()
+                self.current_fee = FEE[0]
+                self.disabled = FEE[1]
 
             amount_to_withdrawal = self.current_fee + random.uniform(69.00, 71.00)
             if self.current_fee < MAX_FEE and not self.disabled:
@@ -118,9 +122,9 @@ class GateWithdraw:
 
         except Exception as error:
             if "Too many tries, please try again later" in str(error):
-                logger.error(f'{self.data.address} | много запросов сплю 10 минут [GATE.IO].')
+                logger.warning(f'{self.data.address} | много запросов на вывод сплю 10 минут [GATE.IO].')
                 await asyncio.sleep(600)
-                self.current_fee, disabled = await self.get_withdrawal_fee()
+                await self.get_withdrawal_fee()
                 await self.start_withdraw()
             logger.error(f'{self.data.address} | не смог вывести {symbol} c [GATE.IO].')
 
@@ -133,18 +137,7 @@ class GateWithdraw:
     @staticmethod
     async def check_current_time():
         current_time = datetime.now().strftime("%H:%M")
-        if current_time[-2:] in ["59", "00", "01", "19", "20", "21"]:
-
-            if current_time[-2:] in ["59", "19"]:
-                sleep_time = 210
-            elif current_time[-2:] in ["00", "20"]:
-                sleep_time = 150
-            else:
-                sleep_time = 90
-
-            GateWithdraw.need_update = True
-
-            logger.info(f'Текущее время перед обновлением комиссии! Ухожу на сон - {sleep_time} секунд')
-            await asyncio.sleep(sleep_time)
+        if int(current_time[-2:]) % 3 == 0:
+            logger.info(f'Необходимо обновить комиссию')
             return True
         return False

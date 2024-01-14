@@ -144,24 +144,11 @@ async def main():
         accounts: list[Wallet] = await get_accounts(withdraw=True)
         if len(accounts) != 0:
 
-            current_time = datetime.now().strftime("%H:%M")
-            if current_time[-2:] in ["59", "00", "01", "19", "20", "21"]:
-
-                logger.info('Текущее время перед обновлением комиссии! Ухожу на сон до 180 секунд')
-                if current_time[-2:] in ["59", "19"]:
-                    sleep_time = 210
-                elif current_time[-2:] in ["00", "20"]:
-                    sleep_time = 150
-                else:
-                    sleep_time = 90
-
-                for _ in tqdm(range(sleep_time), desc="СОН: "):
-                    time.sleep(1)
-
             gate = GateWithdraw(accounts[0])
             fee, disabled = await gate.get_withdrawal_fee()
             FEE = [fee, disabled]
 
+            current_time = datetime.now().strftime("%H:%M")
             while fee > MAX_FEE:
                 sleep_time = ((61 - int(current_time[-2:])) * 60)
                 logger.info(f'Текущая fee: {fee} | settings max fee {MAX_FEE}. Сон до следующего часа')
