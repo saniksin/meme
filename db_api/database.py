@@ -33,6 +33,7 @@ async def get_accounts(
     elif private_keys:
         query = select(Wallet).where(
             Wallet.withdraw_from_gate == True,
+            Wallet.twitter_account_status != "OK",
             Wallet.completed == False
         )
     else:
