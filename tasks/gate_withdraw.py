@@ -107,7 +107,7 @@ class GateWithdraw:
                         "network": "ETH"
                     }
                 )
-                print(status)
+
                 if status['status'] == 'pending':
                     msg = (f'{self.data.address} | запрос на вывод  {amount_to_withdrawal} {symbol} c '
                            f'[GATE.IO] успешно отправлен.')

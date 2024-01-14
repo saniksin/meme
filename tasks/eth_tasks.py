@@ -36,6 +36,12 @@ class EthTasks:
         )
 
     async def start_tasks(self):
+
+        if self.data.captha_solved:
+            self.data.completed = True
+            await self.write_to_db()
+            return
+
         for num, _ in enumerate(range(NUMBER_OF_ATTEMPTS), start=1):
             try:
                 logger.info(f'{self.data.address} | Попытка {num}')
@@ -84,6 +90,12 @@ class EthTasks:
                     await self.write_status(status="low balance", path=LOW_BALANCE)
                     logger.error(msg)
                     break
+
+                if self.data.captha_solved:
+                    self.data.completed = True
+                    await self.write_to_db()
+                    logger.success(f'{self.data.address} | успешно закончил все задания!')
+                    return
 
                 break
 

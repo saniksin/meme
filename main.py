@@ -90,7 +90,7 @@ async def main():
 
     elif user_choice == '   3) Войти с помощью приватного ключа':
 
-        accounts: list[Wallet] = await get_accounts()
+        accounts: list[Wallet] = await get_accounts(private_keys=True)
         if len(accounts) != 0:
             tasks = []
             for account_data in accounts:

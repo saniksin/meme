@@ -10,6 +10,7 @@ problems.txt
 proxy_problem.txt
 low_balance.txt
 problem_with_add_to_wl.txt
+accounts.back
 
 # виртуальное окружение
 .env

@@ -44,6 +44,11 @@ class TwitterTasks:
 
     async def start_tasks(self):
 
+        if self.data.captha_solved and self.data.follow_stakeland:
+            self.data.completed = True
+            await self.write_to_db()
+            return
+
         # Количество попыток в случае неудачи
         for num, _ in enumerate(range(NUMBER_OF_ATTEMPTS), start=1):
             try:
@@ -133,12 +138,17 @@ class TwitterTasks:
                     if not self.data.follow_stakeland:
                         status = await self.follow_quest("stakeland")
                         if status:
-                            logger.info(f'{self.twitter_account} | успешно подписался на @stakeland')
+                            logger.success(f'{self.twitter_account} | успешно подписался на @stakeland')
                             self.data.follow_stakeland = 1
                             await self.write_to_db()
                         else:
-                            logger.info(f'{self.twitter_account} | не смог подписаться на @stakeland')
+                            logger.warning(f'{self.twitter_account} | не смог подписаться на @stakeland')
 
+                    if self.data.captha_solved and self.data.follow_stakeland:
+                        self.data.completed = True
+                        await self.write_to_db()
+                        logger.success(f'{self.twitter_account} | успешно закончил все задания')
+                        return
 
                     break
 

@@ -22,6 +22,7 @@ class Wallet(Base, AutoRepr):
     points = Column(Integer)
     captha_solved = Column(Boolean)
     follow_stakeland = Column(Boolean)
+    completed = Column(Boolean)
 
     def __init__(
             self,
@@ -44,3 +45,4 @@ class Wallet(Base, AutoRepr):
         self.points = 0
         self.captha_solved = False
         self.follow_stakeland = False
+        self.completed = False
