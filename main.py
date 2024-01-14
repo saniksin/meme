@@ -144,12 +144,12 @@ async def main():
         if len(accounts) != 0:
 
             current_time = datetime.now().strftime("%H:%M")
-            if current_time[-2:] in ["59", "00", "01"]:
+            if current_time[-2:] in ["59", "00", "01", "19", "20", "21"]:
 
                 logger.info('Текущее время перед обновлением комиссии! Ухожу на сон до 180 секунд')
-                if current_time[-2:] == "59":
+                if current_time[-2:] in ["59", "19"]:
                     sleep_time = 210
-                elif current_time[-2:] == "00":
+                elif current_time[-2:] in ["00", "20"]:
                     sleep_time = 150
                 else:
                     sleep_time = 90
