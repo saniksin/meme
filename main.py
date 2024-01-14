@@ -143,19 +143,8 @@ async def main():
     elif user_choice == '   5) Вывод с GATE':
         accounts: list[Wallet] = await get_accounts(withdraw=True)
         if len(accounts) != 0:
-
             gate = GateWithdraw(accounts[0])
-            fee, disabled = await gate.get_withdrawal_fee()
-            FEE = [fee, disabled]
-
-            current_time = datetime.now().strftime("%H:%M")
-            while fee > MAX_FEE:
-                sleep_time = ((61 - int(current_time[-2:])) * 60)
-                logger.info(f'Текущая fee: {fee} | settings max fee {MAX_FEE}. Сон до следующего часа')
-                for _ in tqdm(range(sleep_time), desc="СОН: "):
-                    time.sleep(1)
-                fee, disabled = await gate.get_withdrawal_fee()
-                FEE = [fee, disabled]
+            await gate.get_withdrawal_fee()
 
             task_counter = 0
             for account_data in accounts:

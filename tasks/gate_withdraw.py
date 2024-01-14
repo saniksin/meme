@@ -1,3 +1,4 @@
+import time
 import random
 from datetime import datetime
 
@@ -5,6 +6,7 @@ import ccxt
 import asyncio
 from better_automation.base import BaseAsyncSession
 from sqlalchemy.ext.asyncio import AsyncSession
+from tqdm import tqdm
 
 from db_api.database import Wallet, db
 from data.config import logger, FEE
@@ -61,8 +63,10 @@ class GateWithdraw:
                     is_disabled = response_data['datas'][0]['is_disabled']
 
                     if withdraw_txfee > MAX_FEE:
-                        logger.info(f'{self.data.address} | комиссия слишком большая, ухожу на сон 400 сек')
-                        await asyncio.sleep(400)
+                        time_sleep = 400
+                        logger.info(f'{self.data.address} | комиссия слишком большая, ухожу на сон {time_sleep} сек')
+                        for _ in tqdm(range(time_sleep), desc="COН: "):
+                            time.sleep(1)
                         continue
 
                     FEE[0] = withdraw_txfee
@@ -74,8 +78,12 @@ class GateWithdraw:
 
                 elif 'Слишком много попыток' in response_data.values() or \
                      'Too many attempts' in response_data.values():
-                    logger.info(f'{self.data.address} | ухожу на сон 400 сек. Слишком много попыток получить ком-су.')
-                    await asyncio.sleep(400)
+                    time_sleep = 400
+                    msg = (f'{self.data.address} | ухожу на сон {time_sleep} сек. '
+                           f'Слишком много попыток получить ком-су | API не отвечает.')
+                    logger.warning(msg)
+                    for _ in tqdm(range(time_sleep), desc="COН: "):
+                        time.sleep(1)
                     continue
                 else:
                     logger.error(f"Request failed with status code: {response.status_code}")
@@ -101,7 +109,7 @@ class GateWithdraw:
                 self.current_fee = FEE[0]
                 self.disabled = FEE[1]
 
-            amount_to_withdrawal = self.current_fee + random.uniform(69.00, 71.00)
+            amount_to_withdrawal = self.current_fee + random.uniform(69.00, 70.00)
             if self.current_fee < MAX_FEE and not self.disabled:
                 status = exchange.withdraw(
                     code=symbol,
