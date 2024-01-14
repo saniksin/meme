@@ -64,7 +64,9 @@ class GateWithdraw:
 
                     if withdraw_txfee > MAX_FEE:
                         time_sleep = 400
-                        logger.info(f'{self.data.address} | комиссия слишком большая, ухожу на сон {time_sleep} сек')
+                        msg = (f'{self.data.address} | комиссия слишком большая, '
+                               f'текущая комиссия = {withdraw_txfee} ухожу на сон {time_sleep} сек')
+                        logger.info(msg)
                         for _ in tqdm(range(time_sleep), desc="COН: "):
                             time.sleep(1)
                         continue
@@ -121,7 +123,7 @@ class GateWithdraw:
                 )
 
                 if status['status'] == 'pending':
-                    msg = (f'{self.data.address} | запрос на вывод  {amount_to_withdrawal} {symbol} c '
+                    msg = (f'{self.data.address} | запрос на вывод {amount_to_withdrawal} {symbol} c '
                            f'[GATE.IO] успешно отправлен.')
                     logger.success(msg)
 
