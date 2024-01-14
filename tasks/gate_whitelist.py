@@ -197,7 +197,7 @@ class GateAddWhitelist:
                 if result['result'] or result['msg'] == "Address must be unique":
                     logger.success(f'{self.data.address} | {result["msg"]}')
                     self.data.add_to_gate_whitelist = True
-                    await self.write_to_db()
+                    await self.write_to_db(self.data)
                     break
                 continue
 
