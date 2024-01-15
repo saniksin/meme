@@ -14,6 +14,9 @@ from settings.settings import CSRFTOKEN, COOKIES, API_KEY, SECRET, MAX_FEE
 
 
 class GateWithdraw:
+    checked = False
+    old_time = datetime.min.strftime("%H:%M")
+
     headers = {
         'authority': 'www.gate.io',
         'accept': '*/*',
@@ -147,7 +150,14 @@ class GateWithdraw:
     @staticmethod
     async def check_current_time():
         current_time = datetime.now().strftime("%H:%M")
-        if int(current_time[-2:]) % 3 == 0:
-            logger.info(f'Необходимо обновить комиссию')
-            return True
+        if current_time != GateWithdraw.old_time:
+            GateWithdraw.checked = False
+        elif current_time == GateWithdraw.old_time:
+            GateWithdraw.checked = True
+        GateWithdraw.old_time = current_time
+        if not GateWithdraw.checked:
+            if int(current_time[-2:]) % 3 == 0:
+                logger.info(f'Необходимо обновить комиссию')
+                return True
+            return False
         return False
