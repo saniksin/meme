@@ -61,12 +61,13 @@ class GateWithdraw:
                 )
 
                 response_data = response.json()
+                
                 if response.status_code == 200:
                     withdraw_txfee = response_data['datas'][0]['withdraw_txfee']
                     is_disabled = response_data['datas'][0]['is_disabled']
 
-                    if withdraw_txfee > MAX_FEE:
-                        time_sleep = 400
+                    if float(withdraw_txfee) > MAX_FEE:
+                        time_sleep = 120
                         msg = (f'{self.data.address} | комиссия слишком большая, '
                                f'текущая комиссия = {withdraw_txfee} ухожу на сон {time_sleep} сек')
                         logger.info(msg)
@@ -139,6 +140,7 @@ class GateWithdraw:
                 await asyncio.sleep(600)
                 await self.get_withdrawal_fee()
                 await self.start_withdraw()
+                return
             logger.error(f'{self.data.address} | не смог вывести {symbol} c [GATE.IO].')
 
     async def write_to_db(self):
@@ -156,7 +158,7 @@ class GateWithdraw:
             GateWithdraw.checked = True
         GateWithdraw.old_time = current_time
         if not GateWithdraw.checked:
-            if int(current_time[-2:]) % 3 == 0:
+            if int(current_time[-2:]) % 2 == 0:
                 logger.info(f'Необходимо обновить комиссию')
                 return True
             return False
