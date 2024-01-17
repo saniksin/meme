@@ -1,3 +1,4 @@
+import sys
 import time
 import random
 from datetime import datetime
@@ -48,6 +49,7 @@ class GateWithdraw:
             try:
                 logger.info(f'{self.data.address} | пробую получить новую комиссию')
                 url = 'https://www.gate.io/json_svr/query?u=113'
+
                 data = {
                     'type': 'check_withdraw_chain_by_addr',
                     'curr_type': 'MEME',
@@ -61,26 +63,29 @@ class GateWithdraw:
                 )
 
                 response_data = response.json()
-                
                 if response.status_code == 200:
-                    withdraw_txfee = response_data['datas'][0]['withdraw_txfee']
-                    is_disabled = response_data['datas'][0]['is_disabled']
+                    try:
+                        withdraw_txfee = response_data['datas'][0]['withdraw_txfee']
+                        is_disabled = response_data['datas'][0]['is_disabled']
 
-                    if float(withdraw_txfee) > MAX_FEE:
-                        time_sleep = 120
-                        msg = (f'{self.data.address} | комиссия слишком большая, '
-                               f'текущая комиссия = {withdraw_txfee} ухожу на сон {time_sleep} сек')
-                        logger.info(msg)
-                        for _ in tqdm(range(time_sleep), desc="COН: "):
-                            time.sleep(1)
-                        continue
+                        if float(withdraw_txfee) > MAX_FEE:
+                            time_sleep = 120
+                            msg = (f'{self.data.address} | комиссия слишком большая, '
+                                f'текущая комиссия = {withdraw_txfee} ухожу на сон {time_sleep} сек')
+                            logger.info(msg)
+                            for _ in tqdm(range(time_sleep), desc="COН: "):
+                                time.sleep(1)
+                            continue
 
-                    FEE[0] = withdraw_txfee
-                    FEE[1] = is_disabled
+                        FEE[0] = withdraw_txfee
+                        FEE[1] = is_disabled
 
-                    logger.info('Новая комиссия получена и успешно записана!')
+                        logger.info('Новая комиссия получена и успешно записана!')
 
-                    return
+                        return
+                    except IndexError:
+                        logger.error(f'куки и токен могут быть не актуальными, проверьте данные. Ответ сервера: {response_data}')
+                        sys.exit(1)
 
                 elif 'Слишком много попыток' in response_data.values() or \
                      'Too many attempts' in response_data.values():

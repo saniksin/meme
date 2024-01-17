@@ -145,7 +145,6 @@ async def main():
         if len(accounts) != 0:
             gate = GateWithdraw(accounts[0])
             await gate.get_withdrawal_fee()
-
             task_counter = 0
             for account_data in accounts:
                 task_counter += 1
