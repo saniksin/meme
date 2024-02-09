@@ -7,7 +7,7 @@ import time
 from tqdm import tqdm
 
 from data.config import logger, TWITTER_TOKENS, PROXYS, PRIVATE_KEYS, completed_tasks, tasks_lock, FEE, FINISHED, \
-    VERIFICATION
+    VERIFICATION, RESULT
 from utils.adjust_policy import set_windows_event_loop_policy
 from utils.create_files import create_files
 from utils.validate_tokens import validate_token
@@ -185,6 +185,26 @@ async def main():
                 tasks.append(task)
 
             await asyncio.wait(tasks)
+        else:
+            logger.error(f'Вы не добавили приватники в базу данных!')
+
+    elif user_choice == '   8) Проверить результат фарминга':
+
+        accounts: list[Wallet] = await get_accounts(check_status=True)
+        if len(accounts) != 0:
+            tasks = []
+            for account_data in accounts:
+                task = asyncio.create_task(start_limited_task(semaphore, accounts, account_data, option=8))
+                tasks.append(task)
+
+            await asyncio.wait(tasks)
+
+            msg = (
+                f'\n\nВсего аккаунтов {len(accounts)}.\n'
+                f'Аккаунтов со статусом "HUMAN": {RESULT[0]}\n'
+                f'Аккаунтов со статусом "ROBOT": {RESULT[1]}\n'
+            )
+            logger.info(msg)
         else:
             logger.error(f'Вы не добавили приватники в базу данных!')
 

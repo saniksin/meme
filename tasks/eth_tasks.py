@@ -9,7 +9,7 @@ from curl_cffi.requests.errors import RequestsError
 
 from db_api.database import Wallet, db
 from eth.eth_clients import EthClient
-from data.config import MEME_CONTRACT, logger, PROBLEM_PROXY, LOW_BALANCE, FINISHED, VERIFICATION, BEARER_TOKEN
+from data.config import MEME_CONTRACT, logger, PROBLEM_PROXY, LOW_BALANCE, FINISHED, VERIFICATION, BEARER_TOKEN, RESULT
 from settings.settings import MIN_BALANCE, NUMBER_OF_ATTEMPTS
 from tasks.captha_tasks import CapthaSolver
 
@@ -35,6 +35,65 @@ class EthTasks:
             token_address=MEME_CONTRACT,
             address=self.eth_client.account.address
         )
+    
+    async def start_check_result(self):
+        for num, _ in enumerate(range(NUMBER_OF_ATTEMPTS), start=1):
+            try:
+                logger.info(f'{self.data.address} | Попытка {num}')
+
+                # логинимся
+                await self.start_login()
+
+                status = await self.chech_meme_farming_result()
+                if status:
+                    logger.info(f'{self.data.address} | успешно получил статус')
+                    return 
+                else:
+                    logger.error(f'{self.data.address} | не смог получить статус')
+                    continue
+            
+            except RequestsError:
+                logger.error(f'{self.data.address} | проблема с прокси! Проверьте прокси!')
+                await self.write_status(status="proxy problem", path=PROBLEM_PROXY)
+                continue
+
+            except Exception as error:
+                logger.error(f'{self.data.address} | неизвестная ошибка: {error}')
+                print(traceback.print_exc())
+
+    async def chech_meme_farming_result(self):
+        headers = {
+            'authority': 'memefarm-api.memecoin.org',
+            'accept': 'application/json',
+            'accept-language': 'en-US,en;q=0.9',
+            'authorization': f'Bearer {self.bearer_token}',
+            'origin': 'https://www.memecoin.org',
+            'priority': 'u=1, i',
+            'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': f'"{self.data.platform}"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-site',
+            'user-agent': self.data.user_agent,
+        }
+
+        response = await self.async_session.get(
+            'https://memefarm-api.memecoin.org/user/results', 
+            headers=headers
+        )
+
+        if response.status_code == 200:
+            answer = response.json()
+            async with EthTasks.write_lock:
+                if answer.get('results', [])[0].get('won', False):
+                    RESULT[0] += 1
+                    return True
+                else:
+                    RESULT[1] += 1
+                    return True
+        return False
+
 
     async def start_tasks(self):
 

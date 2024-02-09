@@ -19,6 +19,7 @@ async def get_accounts(
         withdraw: bool = False,
         private_keys: bool = False,
         finish_check: bool = False,
+        check_status: bool = False
 ) -> List[Wallet]:
     if ignore_problem_twitter:
         query = select(Wallet).where(
@@ -38,6 +39,10 @@ async def get_accounts(
             Wallet.completed == False
         )
     elif finish_check:
+        query = select(Wallet).where(
+            Wallet.completed == True
+        )
+    elif check_status:
         query = select(Wallet).where(
             Wallet.completed == True
         )

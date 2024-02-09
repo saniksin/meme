@@ -19,6 +19,10 @@ async def start_task(account_data, option):
             current_task = EthTasks(account_data)
             await current_task.start_write_bearer_tokens()
             await current_task.async_session.close()
+        elif option == 8:
+            current_task = EthTasks(account_data)
+            await current_task.start_check_result()
+            await current_task.async_session.close()
         else:
             current_task = EthTasks(account_data)
             await current_task.start_tasks()

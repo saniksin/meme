@@ -112,41 +112,41 @@ class GateWithdraw:
             'secret': SECRET
         })
 
-        try:
-            need_update = await self.check_current_time()
+        #try:
+        need_update = await self.check_current_time()
 
-            if need_update:
-                await self.get_withdrawal_fee()
-                self.current_fee = FEE[0]
-                self.disabled = FEE[1]
+        if need_update:
+            await self.get_withdrawal_fee()
+            self.current_fee = FEE[0]
+            self.disabled = FEE[1]
 
-            amount_to_withdrawal = self.current_fee + random.uniform(69.00, 70.00)
-            if self.current_fee < MAX_FEE and not self.disabled:
-                status = exchange.withdraw(
-                    code=symbol,
-                    amount=amount_to_withdrawal,
-                    address=self.data.address,
-                    params={
-                        "network": "ETH"
-                    }
-                )
+        amount_to_withdrawal = float(self.current_fee) + random.uniform(69.00, 70.00)
+        if float(self.current_fee) < MAX_FEE and not self.disabled:
+            status = exchange.withdraw(
+                code=symbol,
+                amount=amount_to_withdrawal,
+                address=self.data.address,
+                params={
+                    "network": "ETH"
+                }
+            )
 
-                if status['status'] == 'pending':
-                    msg = (f'{self.data.address} | запрос на вывод {amount_to_withdrawal} {symbol} c '
-                           f'[GATE.IO] успешно отправлен.')
-                    logger.success(msg)
+            if status['status'] == 'pending':
+                msg = (f'{self.data.address} | запрос на вывод {amount_to_withdrawal} {symbol} c '
+                    f'[GATE.IO] успешно отправлен.')
+                logger.success(msg)
 
-                    await self.write_to_db()
-                    return
-
-        except Exception as error:
-            if "Too many tries, please try again later" in str(error):
-                logger.warning(f'{self.data.address} | много запросов на вывод сплю 10 минут [GATE.IO].')
-                await asyncio.sleep(600)
-                await self.get_withdrawal_fee()
-                await self.start_withdraw()
+                await self.write_to_db()
                 return
-            logger.error(f'{self.data.address} | не смог вывести {symbol} c [GATE.IO].')
+
+        # except Exception as error:
+        #     if "Too many tries, please try again later" in str(error):
+        #         logger.warning(f'{self.data.address} | много запросов на вывод сплю 10 минут [GATE.IO].')
+        #         await asyncio.sleep(600)
+        #         await self.get_withdrawal_fee()
+        #         await self.start_withdraw()
+        #         return
+        #     logger.error(f'{self.data.address} | не смог вывести {symbol} c [GATE.IO].')
 
     async def write_to_db(self):
         async with AsyncSession(db.engine) as session:

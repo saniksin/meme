@@ -66,3 +66,6 @@ FEE = [0, 0]
 
 # Acc finished - не трогать!
 FINISHED = [0, 0, 0, 0]
+
+# Meme Farming Result
+RESULT = [0, 0]
